@@ -1,76 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Unblocker</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f0f2f5;
-            margin: 0;
-        }
-        .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            width: 80%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #proxyFrame {
-            width: 100%;
-            height: 600px; /* Adjust as needed */
-            border: 1px solid #ddd;
-            margin-top: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Access Blocked Websites</h1>
-        <input type="text" id="urlInput" placeholder="Enter URL (e.g., example.com)">
-        <button onclick="loadProxy()">Go</button>
-        <iframe id="proxyFrame" frameborder="0"></iframe>
-    </div>
-
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="" />
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HWLK0PZVBM"></script>
     <script>
-        function loadProxy() {
-            const url = document.getElementById('urlInput').value;
-            const proxyFrame = document.getElementById('proxyFrame');
-            // In a real unblocker, this would send the URL to a backend proxy server
-            // and load the proxied content into the iframe.
-            // For this example, we're simply loading the URL directly (not a true proxy).
-            // A real implementation would involve server-side logic to fetch and rewrite content.
-            proxyFrame.src = url; 
-        }
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-HWLK0PZVBM', { send_page_view: false });
     </script>
-</body>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/startup.jsx"></script>
+    <style>
+      body {
+        background-size: 24px 24px;
+        opacity: 1;
+      }
+    </style>
+  </body>
 </html>
