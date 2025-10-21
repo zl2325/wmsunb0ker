@@ -1,31 +1,19 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Simple Proxy Client</title>
-</head>
-<body>
-    <h1>Proxy Bypass Tool</h1>
-    <form id="proxyForm">
-        <input type="text" id="url" placeholder="Enter URL" required>
-        <button type="submit">Go</button>
-    </form>
-    <pre id="result"></pre>
-
-    <script>
-        document.getElementById('proxyForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const url = document.getElementById('url').value;
-
-            // Send request to your proxy server
-            fetch('/proxy?url=' + encodeURIComponent(url))
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('result').textContent = data;
-                })
-                .catch(error => {
-                    document.getElementById('result').textContent = 'Error fetching URL.';
-                });
-        });
-    </script>
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>ProxyPlay - Your Gateway to Freedom</title>
+    <meta name="description" content="Access restricted content and play classic browser games. Your personal proxy and gaming hub for unrestricted browsing and entertainment." />
+    <meta property="og:title" content="ProxyPlay - Your Gateway to Freedom" />
+    <meta property="og:description" content="Access restricted content and play classic browser games in one place." />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
