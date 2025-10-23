@@ -1,19 +1,407 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>ProxyPlay - Your Gateway to Freedom</title>
-    <meta name="description" content="Access restricted content and play classic browser games. Your personal proxy and gaming hub for unrestricted browsing and entertainment." />
-    <meta property="og:title" content="ProxyPlay - Your Gateway to Freedom" />
-    <meta property="og:description" content="Access restricted content and play classic browser games in one place." />
-    <meta property="og:type" content="website" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Moon, Sun, Gamepad2, AlertTriangle, Maximize, X, ExternalLink, Play, Users } from "lucide-react";
+
+export default function ProxyPlayground() {
+  const [url, setUrl] = useState("");
+  const [proxyUrl, setProxyUrl] = useState("");
+  const [darkMode, setDarkMode] = useState(false);
+  const [activeSite, setActiveSite] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fullScreen, setFullScreen] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Check system preference and saved preference
+  useEffect(() => {
+    const savedMode = localStorage.getItem("darkMode");
+    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    
+    if (savedMode !== null) {
+      setDarkMode(savedMode === "true");
+    } else {
+      setDarkMode(systemPrefersDark);
+    }
+  }, []);
+
+  // Apply dark mode class to document
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("darkMode", darkMode.toString());
+  }, [darkMode]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (url) {
+      loadUrl(url);
+    }
+  };
+
+  const loadUrl = (inputUrl: string) => {
+    setLoading(true);
+    setError(null);
+    setActiveSite(null);
+    setFullScreen(false);
+    
+    try {
+      const formattedUrl = inputUrl.startsWith('http') ? inputUrl : `https://${inputUrl}`;
+      // Using AllOrigins proxy service which handles navigation properly
+      const proxiedUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(formattedUrl)}`;
+      setProxyUrl(proxiedUrl);
+      setUrl(inputUrl);
+    } catch (err) {
+      setError("Invalid URL format");
+      setLoading(false);
+    }
+  };
+
+  const handleIframeLoad = () => {
+    setLoading(false);
+  };
+
+  const handleIframeError = () => {
+    setLoading(false);
+    setError("Failed to load page. This site may block iframe embedding.");
+  };
+
+  const openInNewTab = () => {
+    if (proxyUrl || url) {
+      const targetUrl = proxyUrl || (url.startsWith('http') ? url : `https://${url}`);
+      const newWindow = window.open("about:blank", "_blank");
+      if (newWindow) {
+        newWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Proxy: ${targetUrl}</title>
+            <style>
+              body, html { 
+                margin: 0; 
+                padding: 0; 
+                height: 100%; 
+                overflow: hidden;
+                ${darkMode ? "background-color: #450a0a; color: #f1f5f9;" : ""}
+              }
+              iframe { 
+                width: 100vw; 
+                height: 100vh; 
+                border: none;
+              }
+            </style>
+          </head>
+          <body>
+            <iframe src="${targetUrl}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation allow-downloads"></iframe>
+          </body>
+          </html>
+        `);
+        newWindow.document.close();
+      }
+    }
+  };
+
+  const loadSite = (siteUrl: string, siteName: string) => {
+    setLoading(true);
+    setError(null);
+    setActiveSite(siteName);
+    setUrl("");
+    setFullScreen(false);
+    
+    // Special handling for YouTube and Poki.com
+    if (siteName === "YouTube" || siteName === "Poki.com") {
+      // These sites work better with direct iframe embedding
+      setProxyUrl(siteUrl);
+    } else {
+      // Other sites use the proxy service
+      const proxiedUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(siteUrl)}`;
+      setProxyUrl(proxiedUrl);
+    }
+  };
+
+  const toggleFullScreen = () => {
+    setFullScreen(!fullScreen);
+  };
+
+  const exitFullScreen = () => {
+    setFullScreen(false);
+  };
+
+  const openOriginalSite = () => {
+    if (url) {
+      const targetUrl = url.startsWith('http') ? url : `https://${url}`;
+      window.open(targetUrl, '_blank');
+    } else if (activeSite) {
+      let siteUrl = "";
+      switch(activeSite) {
+        case "YouTube": siteUrl = "https://www.youtube.com"; break;
+        case "Poki.com": siteUrl = "https://www.poki.com"; break;
+        case "Cookie Clicker": siteUrl = "https://orteil.dashnet.org/cookieclicker/"; break;
+        case "Clash Royale": siteUrl = "https://clashroyale.com/"; break;
+      }
+      if (siteUrl) window.open(siteUrl, '_blank');
+    }
+  };
+
+  if (fullScreen) {
+    return (
+      <div className="fixed inset-0 bg-black z-50 flex flex-col">
+        <div className="flex justify-between items-center p-2 bg-red-900">
+          <h2 className="text-white font-medium">
+            {activeSite ? `${activeSite} - Full Screen` : "Proxy Preview - Full Screen"}
+          </h2>
+          <div className="flex gap-2">
+            <Button 
+              onClick={openOriginalSite}
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-red-800"
+            >
+              <ExternalLink className="h-4 w-4 mr-1" />
+              Original Site
+            </Button>
+            <Button 
+              onClick={exitFullScreen}
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-red-800"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+        <div className="flex-grow relative">
+          {proxyUrl && (
+            <iframe 
+              ref={iframeRef}
+              src={proxyUrl} 
+              className="w-full h-full"
+              title="Full Screen Proxy"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation allow-downloads"
+              onLoad={handleIframeLoad}
+              onError={handleIframeError}
+            />
+          )}
+          {loading && (
+            <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+              <div className="text-white text-center">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500 mb-3"></div>
+                <p>Loading content...</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-red-900 dark:bg-red-900 p-4 md:p-8 flex flex-col items-center justify-center">
+      <Card className="w-full max-w-4xl shadow-xl dark:bg-gray-800">
+        <CardHeader className="text-center">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-3">
+              <Gamepad2 className="h-8 w-8 text-red-500" />
+              <div>
+                <CardTitle className="text-2xl md:text-3xl">Proxy Playground</CardTitle>
+                <CardDescription>Proxy URLs or browse popular sites</CardDescription>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setDarkMode(!darkMode)}
+              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex-grow">
+              <Input
+                type="text"
+                placeholder="Enter URL (e.g., example.com)"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                disabled={loading}
+              />
+            </div>
+            <Button type="submit" className="w-full sm:w-auto" disabled={loading}>
+              {loading ? "Loading..." : "Load in Proxy"}
+            </Button>
+          </form>
+          
+          <div className="mb-6">
+            <h3 className="text-lg font-medium mb-3 dark:text-gray-100">Popular Sites</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Button 
+                onClick={() => loadSite("https://www.youtube.com", "YouTube")}
+                variant={activeSite === "YouTube" ? "default" : "outline"}
+                className="h-14 flex flex-col items-center justify-center gap-1 py-2"
+                disabled={loading}
+              >
+                <Play className="h-5 w-5" />
+                <span>YouTube</span>
+              </Button>
+              <Button 
+                onClick={() => loadSite("https://www.poki.com", "Poki.com")}
+                variant={activeSite === "Poki.com" ? "default" : "outline"}
+                className="h-14 flex flex-col items-center justify-center gap-1 py-2"
+                disabled={loading}
+              >
+                <Users className="h-5 w-5" />
+                <span>Poki.com</span>
+              </Button>
+              <Button 
+                onClick={() => loadSite("https://orteil.dashnet.org/cookieclicker/", "Cookie Clicker")}
+                variant={activeSite === "Cookie Clicker" ? "default" : "outline"}
+                className="h-14 flex flex-col items-center justify-center gap-1 py-2"
+                disabled={loading}
+              >
+                <Gamepad2 className="h-5 w-5" />
+                <span>Cookie Clicker</span>
+              </Button>
+              <Button 
+                onClick={() => loadSite("https://clashroyale.com/", "Clash Royale")}
+                variant={activeSite === "Clash Royale" ? "default" : "outline"}
+                className="h-14 flex flex-col items-center justify-center gap-1 py-2"
+                disabled={loading}
+              >
+                <Gamepad2 className="h-5 w-5" />
+                <span>Clash Royale</span>
+              </Button>
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-medium dark:text-gray-100">
+                {activeSite ? `${activeSite} Preview` : proxyUrl ? "URL Preview" : "Preview Area"}
+              </h3>
+              <div className="flex gap-2">
+                {(proxyUrl || activeSite) && (
+                  <Button 
+                    onClick={openOriginalSite}
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Original Site
+                  </Button>
+                )}
+                {proxyUrl && (
+                  <Button 
+                    onClick={toggleFullScreen}
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+                  >
+                    <Maximize className="h-4 w-4" />
+                    Full Screen
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg h-96 overflow-hidden relative">
+              {loading && (
+                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center z-10">
+                  <div className="text-white text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-500 mb-2"></div>
+                    <p>Loading content...</p>
+                  </div>
+                </div>
+              )}
+              
+              {error && (
+                <div className="absolute inset-0 bg-red-900 bg-opacity-80 flex items-center justify-center z-10 p-4">
+                  <div className="text-center text-white">
+                    <AlertTriangle className="h-12 w-12 mx-auto mb-3 text-yellow-400" />
+                    <p className="font-medium mb-2">Loading Error</p>
+                    <p className="text-sm mb-4">{error}</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        setError(null);
+                        setLoading(false);
+                      }}
+                      className="border-white text-white hover:bg-white hover:text-red-900"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {proxyUrl ? (
+                <iframe 
+                  ref={iframeRef}
+                  src={proxyUrl} 
+                  className="w-full h-full"
+                  title="Proxy Preview"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation allow-downloads"
+                  onLoad={handleIframeLoad}
+                  onError={handleIframeError}
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 p-4 text-center">
+                  <Gamepad2 className="h-12 w-12 mb-4 text-red-500" />
+                  <p className="mb-2">Enter a URL or select a site to get started</p>
+                  <p className="text-sm">Note: Some sites may block iframe embedding</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+        
+        <CardFooter className="flex flex-col sm:flex-row gap-3">
+          <Button 
+            onClick={openInNewTab} 
+            className="w-full"
+            disabled={(!url && !proxyUrl && !activeSite) || loading}
+          >
+            Open in New Tab
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              setUrl("");
+              setProxyUrl("");
+              setActiveSite(null);
+              setError(null);
+              setLoading(false);
+            }}
+            className="w-full sm:w-auto dark:border-gray-600 dark:text-gray-200"
+          >
+            Clear All
+          </Button>
+        </CardFooter>
+      </Card>
+      
+      <div className="mt-8 text-center text-sm text-gray-300 dark:text-gray-400 max-w-2xl">
+        <p className="mb-2">
+          <strong>How to use:</strong> Enter any URL above or select a popular site to browse in the proxy.
+        </p>
+        <p>
+          Note: Some websites may block iframe embedding due to security policies (X-Frame-Options).
+        </p>
+      </div>
+      
+      <div className="mt-6 text-center text-xs text-gray-300 dark:text-gray-500 max-w-2xl">
+        <p>By using this website you are responsible for any trouble caused, not me.</p>
+      </div>
+    </div>
+  );
+}
